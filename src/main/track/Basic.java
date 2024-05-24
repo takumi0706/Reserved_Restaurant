@@ -17,7 +17,6 @@ public class Basic {
         List<String> slots = Arrays.asList(input[2].split(" ")).subList(2, 2 + k_slots);
 
         Restaurant restaurant = new Restaurant(n_tables, capacity, runningHours, k_slots, slots);
-        Map<Integer, Reservation> reservationMap = new HashMap<>();
 
         for (int i = 3; i < input.length; i++) {
             String[] query = input[i].split(" ");
@@ -65,7 +64,6 @@ public class Basic {
                         }
                         Reservation reservation = new Reservation(date, slot, people, table_id, id);
                         restaurant.tables[table_id - 1].reservations.get(slot).put(date, reservation);
-                        reservationMap.put(id, reservation);
                         System.out.printf("%s %05d%n", timestamp, id);
                     }
                     break;
