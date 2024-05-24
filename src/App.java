@@ -7,12 +7,14 @@ public class App {
         int slot;
         int people;
         int table;
+        String id;
 
-        Reservation(int date, int slot, int people, int table) {
+        Reservation(int date, int slot, int people, int table, String id) {
             this.date = date;
             this.slot = slot;
             this.people = people;
             this.table = table;
+            this.id = id;
         }
     }
 
@@ -79,7 +81,7 @@ public class App {
                         Map<Integer, Reservation> slotReservations = restaurant.tables[t].reservations.get(slot);
                         if (slotReservations != null) {
                             for (Reservation res : slotReservations.values()) {
-                                System.out.printf("%s table %d = %05d%n", timestamp, t + 1, res.table);
+                                System.out.printf("%s table %d = %05d%n", timestamp, t + 1, Integer.parseInt(res.id));
                             }
                         }
                     }
@@ -100,7 +102,7 @@ public class App {
                     if (!restaurant.tables[table - 1].reservations.containsKey(slot)) {
                         restaurant.tables[table - 1].reservations.put(slot, new HashMap<>());
                     }
-                    Reservation reservation = new Reservation(date, slot, people, table);
+                    Reservation reservation = new Reservation(date, slot, people, table, reservationId);
                     restaurant.tables[table - 1].reservations.get(slot).put(date, reservation);
                     reservationMap.put(reservationId, reservation);
                     System.out.printf("%s %s%n", timestamp, reservationId);
