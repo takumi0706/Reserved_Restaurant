@@ -76,9 +76,11 @@ public class App {
                 }
                 if (slot <= k) {
                     for (int t = 0; t < n; t++) {
-                        if (restaurant.tables[t].reservations.containsKey(slot)) {
-                            System.out.printf("%s table %d = %05d%n", timestamp, t + 1,
-                                    restaurant.tables[t].reservations.get(slot).get(t + 1).table);
+                        Map<Integer, Reservation> slotReservations = restaurant.tables[t].reservations.get(slot);
+                        if (slotReservations != null) {
+                            for (Reservation res : slotReservations.values()) {
+                                System.out.printf("%s table %d = %05d%n", timestamp, t + 1, res.table);
+                            }
                         }
                     }
                 }
