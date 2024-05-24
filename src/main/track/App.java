@@ -1,3 +1,5 @@
+package main.track;
+
 import java.util.*;
 
 public class App {
@@ -107,6 +109,86 @@ public class App {
                     reservationMap.put(reservationId, reservation);
                     System.out.printf("%s %s%n", timestamp, reservationId);
                 }
+            } else if (command.equals("issue-unspecified")) {
+                String reservationId = parts[3];
+                int date = Integer.parseInt(parts[4]);
+                int slot = Integer.parseInt(parts[5]);
+                int people = Integer.parseInt(parts[6]);
+
+                boolean reserved = false;
+                for (int t = 0; t < n; t++) {
+                    if (restaurant.tables[t].capacity >= people) {
+                        if (!restaurant.tables[t].reservations.containsKey(slot)) {
+                            restaurant.tables[t].reservations.put(slot, new HashMap<>());
+                        }
+                        if (!restaurant.tables[t].reservations.get(slot).containsKey(date)) {
+                            Reservation reservation = new Reservation(date, slot, people, t + 1, reservationId);
+                            restaurant.tables[t].reservations.get(slot).put(date, reservation);
+                            reservationMap.put(reservationId, reservation);
+                            System.out.printf("%s %s %d%n", timestamp, reservationId, t + 1);
+                            reserved = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!reserved) {
+                    System.out.printf("%s Error: no available table is found.%n", timestamp);
+                }
+            } else if (command.equals("cancel")) {
+                String reservationId = parts[3];
+                if (!reservationMap.containsKey(reservationId)) {
+                    System.out.printf("%s Error: no such ticket is found.%n", timestamp);
+                } else {
+                    Reservation reservation = reservationMap.get(reservationId);
+                    if (reservation.date - Integer.parseInt(parts[0]) < 1) {
+                        System.out.printf("%s Error: you must cancel at least one day in advance.%n", timestamp);
+                    } else {
+                        reservationMap.remove(reservationId);
+                        restaurant.tables[reservation.table - 1].reservations.get(reservation.slot).remove(reservation.date);
+                        if (restaurant.tables[reservation.table - 1].reservations.get(reservation.slot).isEmpty()) {
+                            restaurant.tables[reservation.table - 1].reservations.remove(reservation.slot);
+                        }
+                        System.out.printf("%s Canceled %s%n", timestamp, reservationId);
+                        reassignUnspecifiedReservations(restaurant, reservation.slot, reservation.date);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void reassignUnspecifiedReservations(Restaurant restaurant, int slot, int date) {
+        List<Reservation> toReassign = new ArrayList<>();
+        for (Table table : restaurant.tables) {
+            if (table.reservations.containsKey(slot)) {
+                for (Reservation res : table.reservations.get(slot).values()) {
+                    if (res.date == date && res.id.startsWith("u")) {
+                        toReassign.add(res);
+                    }
+                }
+                table.reservations.get(slot).values().removeAll(toReassign);
+            }
+        }
+
+        toReassign.sort(Comparator.comparingInt((Reservation res) -> res.people).thenComparing(res -> res.id));
+
+        for (Reservation res : toReassign) {
+            boolean reassigned = false;
+            for (Table table : restaurant.tables) {
+                if (table.capacity >= res.people) {
+                    if (!table.reservations.containsKey(slot)) {
+                        table.reservations.put(slot, new HashMap<>());
+                    }
+                    if (!table.reservations.get(slot).containsKey(date)) {
+                        table.reservations.get(slot).put(date, res);
+                        res.table = table.capacity;
+                        reassigned = true;
+                        break;
+                    }
+                }
+            }
+            if (!reassigned) {
+                System.out.printf("Could not reassign reservation %s%n", res.id);
             }
         }
     }
