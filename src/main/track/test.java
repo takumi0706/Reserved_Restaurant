@@ -2,63 +2,40 @@
 //
 //import java.util.*;
 //
-//public class Advance {
+//public class test {
 //    public static void main(String[] args) {
 //        String[] input = getStdin();
-//        int n_tables = Integer.parseInt(input[0].trim());
-//        int[] capacity = Arrays.stream(input[1].trim().split(" ")).mapToInt(Integer::parseInt).toArray();
-//        String runningHours = input[2].split(" ")[0];
-//        int k_slots = Integer.parseInt(input[2].split(" ")[1]);
-//        List<String> slots = Arrays.asList(input[2].split(" ")).subList(2, 2 + k_slots);
+//        int nTables = Integer.parseInt(input[0].trim());
+//        int[] tableCapacities = Arrays.stream(input[1].trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+//        String[] runningHoursInfo = input[2].trim().split(" ");
+//        String runningHours = runningHoursInfo[0];
+//        int kSlots = Integer.parseInt(runningHoursInfo[1]);
+//        List<String> slots = Arrays.asList(runningHoursInfo).subList(2, 2 + kSlots);
 //
-//        Restaurant restaurant = new Restaurant(n_tables, capacity, runningHours, k_slots, slots);
+//        Restaurant restaurant = new Restaurant(nTables, tableCapacities, runningHours, kSlots, slots);
 //
 //        for (int i = 3; i < input.length; i++) {
 //            String[] query = input[i].split(" ");
-//            String currentDate = query[0];
 //            String timestamp = query[0] + " " + query[1];
 //            String command = query[2];
 //
-//            int slot;
-//            int id;
-//            int reservationDate;
-//            int people;
-//
 //            switch (command) {
 //                case "time":
-//                    slot = Integer.parseInt(query[3]);
-//                    handleTime(slot, n_tables, restaurant, timestamp);
+//                    handleTime(Integer.parseInt(query[3]), restaurant, timestamp);
 //                    break;
-//
 //                case "issue-specified":
-//                    id = Integer.parseInt(query[3]);
-//                    reservationDate = Integer.parseInt(query[4]);
-//                    slot = Integer.parseInt(query[5]);
-//                    people = Integer.parseInt(query[6]);
-//                    int table_id = Integer.parseInt(query[7]);
-//
-//                    handleIssueSpecified(id, reservationDate, slot, people, table_id, restaurant, timestamp, currentDate);
+//                    handleIssueSpecified(query, restaurant, timestamp);
 //                    break;
-//
 //                case "issue-unspecified":
-//                    id = Integer.parseInt(query[3]);
-//                    reservationDate = Integer.parseInt(query[4]);
-//                    slot = Integer.parseInt(query[5]);
-//                    people = Integer.parseInt(query[6]);
-//
-//                    handleIssueUnspecified(id, reservationDate, slot, people, restaurant, timestamp, currentDate);
+//                    handleIssueUnspecified(query, restaurant, timestamp);
 //                    break;
-//
 //                case "cancel":
-//                    id = Integer.parseInt(query[3]);
-//                    handleCancel(id, restaurant, timestamp, currentDate);
+//                    handleCancel(query[3], restaurant, timestamp);
 //                    break;
-//
 //                default:
 //                    break;
 //            }
 //        }
-//        System.exit(0);
 //    }
 //
 //    private static String[] getStdin() {
@@ -67,92 +44,143 @@
 //        while (scanner.hasNext()) {
 //            lines.add(scanner.nextLine());
 //        }
-//        return lines.toArray(new String[lines.size()]);
+//        return lines.toArray(new String[0]);
 //    }
 //
-//    private static void handleTime(int slot, int n_tables, Restaurant restaurant, String timestamp){
+//    private static void handleTime(int slot, Restaurant restaurant, String timestamp) {
 //        if (slot > 1) {
-//            // Remove previous slot reservations
 //            int previousSlot = slot - 1;
-//            for (Table table : restaurant.tables) {
-//                table.reservations.remove(previousSlot);
-//            }
+//            String currentDate = timestamp.split(" ")[0];
+//            restaurant.clearReservations(Integer.parseInt(currentDate), previousSlot);
 //        }
-//        if (slot <= restaurant.k_slots ) {
-//            // Print current slot reservations
-//            for (int t = 0; t < n_tables; t++) {
-//                Map<Integer, Reservation> slotReservations = restaurant.tables[t].reservations.get(slot);
-//                if (slotReservations != null) {
-//                    for (Reservation res : slotReservations.values()) {
-//                        if(String.valueOf(res.reservationDate).equals(timestamp.split(" ")[0])){
-//                            System.out.printf("%s table %d = %05d%n", timestamp, t + 1, res.id);
-//                        }
-//                    }
-//                }
-//            }
+//        if (slot <= restaurant.kSlots) {
+//            restaurant.printReservations(slot, timestamp);
 //        }
 //    }
 //
-//    private static void handleIssueSpecified(int id, int reservationDate, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String currentDate){
-//        if (currentDate.equals(String.valueOf(reservationDate)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
+//    private static void handleIssueSpecified(String[] query, Restaurant restaurant, String timestamp) {
+//        int id = Integer.parseInt(query[3]);
+//        int reservationDate = Integer.parseInt(query[4]);
+//        int slot = Integer.parseInt(query[5]);
+//        int people = Integer.parseInt(query[6]);
+//        int tableId = Integer.parseInt(query[7]);
+//
+//        if (restaurant.isCurrentSlot(slot, timestamp)) {
 //            System.out.printf("%s Error: the current slot cannot be specified.%n", timestamp);
-//        } else if (currentDate.equals(String.valueOf(reservationDate)) && isPastTime(timestamp, restaurant.slots, slot)){
+//        } else if (restaurant.isPastSlot(slot, timestamp)) {
 //            System.out.printf("%s Error: a past time cannot be specified.%n", timestamp);
-//        } else if (restaurant.tables[table_id - 1].capacity < people) {
+//        } else if (restaurant.isOverCapacity(tableId, people)) {
 //            System.out.printf("%s Error: the maximum number of people at the table has been exceeded.%n", timestamp);
-//        } else if (restaurant.tables[table_id - 1].reservations.containsKey(slot) && restaurant.tables[table_id - 1].reservations.get(slot).containsKey(reservationDate)) {
+//        } else if (restaurant.isTableOccupied(tableId, reservationDate, slot)) {
 //            System.out.printf("%s Error: the table is occupied.%n", timestamp);
 //        } else {
-//            if (!restaurant.tables[table_id - 1].reservations.containsKey(slot)) {
-//                restaurant.tables[table_id - 1].reservations.put(slot, new HashMap<>());
-//            }
-//            Reservation reservation = new Reservation(reservationDate, slot, people, table_id, id);
-//            restaurant.tables[table_id - 1].reservations.get(slot).put(reservationDate, reservation);
+//            restaurant.addReservation(tableId, reservationDate, slot, id, people);
 //            System.out.printf("%s %05d%n", timestamp, id);
 //        }
 //    }
 //
-//    private static void handleIssueUnspecified(int id, int reservationDate, int slot, int people, Restaurant restaurant, String timestamp, String currentDate) {
-//        if (currentDate.equals(String.valueOf(reservationDate)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
+//    private static void handleIssueUnspecified(String[] query, Restaurant restaurant, String timestamp) {
+//        int id = Integer.parseInt(query[3]);
+//        int reservationDate = Integer.parseInt(query[4]);
+//        int slot = Integer.parseInt(query[5]);
+//        int people = Integer.parseInt(query[6]);
+//
+//        if (restaurant.isCurrentSlot(slot, timestamp)) {
 //            System.out.printf("%s Error: the current slot cannot be specified.%n", timestamp);
-//        } else if (currentDate.equals(String.valueOf(reservationDate)) && isPastTime(timestamp, restaurant.slots, slot)){
+//        } else if (restaurant.isPastSlot(slot, timestamp)) {
 //            System.out.printf("%s Error: a past time cannot be specified.%n", timestamp);
 //        } else {
-//            Table bestTable = null;
-//            for (Table table : restaurant.tables) {
-//                if (table.capacity >= people && (!table.reservations.containsKey(slot) || !table.reservations.get(slot).containsKey(reservationDate))) {
-//                    if (bestTable == null || table.capacity < bestTable.capacity || (table.capacity == bestTable.capacity && table.tableNumber < bestTable.tableNumber)) {
-//                        bestTable = table;
-//                    }
-//                }
-//            }
-//            if (bestTable != null) {
-//                bestTable.reservations.put(slot, new HashMap<>());
-//                Reservation reservation = new Reservation(reservationDate, slot, people, bestTable.reservations.size(), id);
-//                bestTable.reservations.get(slot).put(reservationDate, reservation);
-//                System.out.printf("%s %05d %d%n", timestamp, id, bestTable.tableNumber);
-//            }else{
+//            int tableId = restaurant.findBestTable(reservationDate, slot, people);
+//            if (tableId == -1) {
 //                System.out.printf("%s Error: no available table is found.%n", timestamp);
+//            } else {
+//                restaurant.addReservation(tableId, reservationDate, slot, id, people);
+//                System.out.printf("%s %05d %d%n", timestamp, id, tableId);
 //            }
 //        }
 //    }
 //
-//    private static void handleCancel(int id, Restaurant restaurant, String timestamp, String currentDate) {
+//    private static void handleCancel(String id, Restaurant restaurant, String timestamp) {
+//        if (restaurant.cancelReservation(Integer.parseInt(id), timestamp)) {
+//            System.out.printf("%s Canceled %05d%n", timestamp, Integer.parseInt(id));
+//            restaurant.adjustReservations();
+//        } else {
+//            System.out.printf("%s Error: no such ticket is found.%n", timestamp);
+//        }
+//    }
+//}
+//
+//class Restaurant {
+//    int nTables;
+//    Table[] tables;
+//    String runningHours;
+//    int kSlots;
+//    List<String> slots;
+//
+//    Restaurant(int nTables, int[] capacities, String runningHours, int kSlots, List<String> slots) {
+//        this.nTables = nTables;
+//        this.tables = new Table[nTables];
+//        for (int i = 0; i < nTables; i++) {
+//            this.tables[i] = new Table(capacities[i], i + 1);
+//        }
+//        this.runningHours = runningHours;
+//        this.kSlots = kSlots;
+//        this.slots = slots;
+//    }
+//
+//    boolean isCurrentSlot(int slot, String timestamp) {
+//        String slotTime = slots.get(slot - 1);
+//        String[] slotParts = slotTime.split("-");
+//        return timestamp.compareTo(slotParts[0]) >= 0 && timestamp.compareTo(slotParts[1]) <= 0;
+//    }
+//
+//    boolean isPastSlot(int slot, String timestamp) {
+//        String[] timeParts = timestamp.split(" ");
+//        String endingTime = timeParts[1];
+//        String[] slotParts = slots.get(slot - 1).split("-");
+//        return endingTime.compareTo(slotParts[1]) >= 0;
+//    }
+//
+//    boolean isOverCapacity(int tableId, int people) {
+//        return tables[tableId - 1].capacity < people;
+//    }
+//
+//    boolean isTableOccupied(int tableId, int reservationDate, int slot) {
+//        return tables[tableId - 1].isOccupied(reservationDate, slot);
+//    }
+//
+//    void addReservation(int tableId, int reservationDate, int slot, int id, int people) {
+//        tables[tableId - 1].addReservation(reservationDate, slot, new Reservation(id, reservationDate, slot, people, tableId));
+//    }
+//
+//    int findBestTable(int reservationDate, int slot, int people) {
+//        Table bestTable = null;
+//        for (Table table : tables) {
+//            if (table.capacity >= people && !table.isOccupied(reservationDate, slot)) {
+//                if (bestTable == null || table.capacity < bestTable.capacity || (table.capacity == bestTable.capacity && table.tableNumber < bestTable.tableNumber)) {
+//                    bestTable = table;
+//                }
+//            }
+//        }
+//        return bestTable != null ? bestTable.tableNumber : -1;
+//    }
+//
+//    boolean cancelReservation(int id, String timestamp) {
 //        boolean found = false;
-//        for (Table table : restaurant.tables) {
-//            for (Map<Integer, Reservation> slotReservations : table.reservations.values()) {
-//                for (Reservation reservation : slotReservations.values()) {
+//        for (Table table : tables) {
+//            for (Map.Entry<Integer, Map<Integer, Reservation>> dateEntry : table.reservations.entrySet()) {
+//                Map<Integer, Reservation> slotReservations = dateEntry.getValue();
+//                for (Map.Entry<Integer, Reservation> slotEntry : slotReservations.entrySet()) {
+//                    Reservation reservation = slotEntry.getValue();
 //                    if (reservation.id == id) {
-//                        if (Integer.parseInt(currentDate) < reservation.reservationDate){
-//                            slotReservations.remove(reservation.reservationDate);
-//                            System.out.printf("%s Canceled %05d%n", timestamp, id);
-//                            adjustReservations(restaurant, reservation.reservationDate, reservation.slot);
+//                        if (isCancelable(reservation, timestamp)) {
+//                            slotReservations.remove(slotEntry.getKey());
 //                            found = true;
-//                            break;
-//                        } else if(Integer.parseInt(currentDate) >= reservation.reservationDate){
+//                            return true;
+//                        } else {
 //                            System.out.printf("%s Error: you must cancel at least one day in advance.%n", timestamp);
 //                            found = true;
-//                            break;
+//                            return false;
 //                        }
 //                    }
 //                }
@@ -160,91 +188,94 @@
 //            }
 //            if (found) break;
 //        }
-//        if (!found) {
-//            System.out.printf("%s Error: no such ticket is found.%n", timestamp);
-//        }
+//        return false;
 //    }
 //
-//    private static void adjustReservations(Restaurant restaurant, int date, int slot) {
+//    boolean isCancelable(Reservation reservation, String timestamp) {
+//        String currentDate = timestamp.split(" ")[0];
+//        return Integer.parseInt(currentDate) < reservation.reservationDate;
+//    }
+//
+//    void adjustReservations() {
 //        List<Reservation> freeReservations = new ArrayList<>();
-//        for (Table table : restaurant.tables) {
-//            Map<Integer, Reservation> slotReservations = table.reservations.get(slot);
-//            if (slotReservations != null) {
-//                for (Reservation res : slotReservations.values()) {
-//                    if (res.reservationDate == date) {
-//                        freeReservations.add(res);
-//                    }
-//                }
+//        for (Table table : tables) {
+//            for (Map<Integer, Reservation> slotReservations : table.reservations.values()) {
+//                freeReservations.addAll(slotReservations.values());
 //                slotReservations.clear();
 //            }
 //        }
-//
-//        // Sort reservations: more people first, then by ID
 //        freeReservations.sort(Comparator.comparingInt((Reservation res) -> res.people).reversed().thenComparingInt(res -> res.id));
 //
 //        for (Reservation res : freeReservations) {
-//            handleIssueUnspecified(res.id, res.reservationDate, res.slot, res.people, restaurant, "", "");
+//            int tableId = findBestTable(res.reservationDate, res.slot, res.people);
+//            if (tableId != -1) {
+//                addReservation(tableId, res.reservationDate, res.slot, res.id, res.people);
+//            }
 //        }
 //    }
 //
-//    private static boolean isWithReservationSlot(String timestamp, List<String> slots, int slot){
-//        String slotTime = slots.get(slot - 1);
-//        String[] slotParts = slotTime.split("-");
-//        return timestamp.compareTo(slotParts[0]) >= 0 && timestamp.compareTo(slotParts[1]) <= 0;
+//    void clearReservations(int reservationDate, int slot) {
+//        for (Table table : tables) {
+//            table.clearReservations(reservationDate, slot);
+//        }
 //    }
 //
-//    private static boolean isPastTime(String timestamp, List<String> slots, int slot){
-//        String[] timeParts = timestamp.split(" ");
-//        String endingTime = timeParts[1];
-//        String[] slotParts = slots.get(slot -1 ).split("-");
-//        return endingTime.compareTo(slotParts[1]) >= 0;
+//    void printReservations(int slot, String timestamp) {
+//        String currentDate = timestamp.split(" ")[0];
+//        for (Table table : tables) {
+//            table.printReservations(Integer.parseInt(currentDate), slot, timestamp);
+//        }
 //    }
 //}
-//
 //
 //class Table {
 //    int capacity;
 //    int tableNumber;
-//    Map<Integer, Map<Integer, Reservation>> reservations;
+//    Map<Integer, Map<Integer, Reservation>> reservations; // reservationDate -> slot -> Reservation
 //
 //    Table(int capacity, int tableNumber) {
 //        this.capacity = capacity;
 //        this.tableNumber = tableNumber;
 //        this.reservations = new HashMap<>();
 //    }
-//}
 //
-//class Reservation {
-//    int reservationDate;
-//    int slot;
-//    int people;
-//    int table_id;
-//    int id;
+//    boolean isOccupied(int reservationDate, int slot) {
+//        return reservations.containsKey(reservationDate) && reservations.get(reservationDate).containsKey(slot);
+//    }
 //
-//    Reservation(int reservationDate, int slot, int people, int table_id, int id) {
-//        this.reservationDate = reservationDate;
-//        this.slot = slot;
-//        this.people = people;
-//        this.table_id = table_id;
-//        this.id = id;
+//    void addReservation(int reservationDate, int slot, Reservation reservation) {
+//        reservations.computeIfAbsent(reservationDate, k -> new HashMap<>()).put(slot, reservation);
+//    }
+//
+//    void clearReservations(int reservationDate, int slot) {
+//        if (reservations.containsKey(reservationDate)) {
+//            reservations.get(reservationDate).remove(slot);
+//        }
+//    }
+//
+//    void printReservations(int reservationDate, int slot, String timestamp) {
+//        if (reservations.containsKey(reservationDate)) {
+//            Map<Integer, Reservation> slotReservations = reservations.get(reservationDate);
+//            if (slotReservations.containsKey(slot)) {
+//                Reservation reservation = slotReservations.get(slot);
+//                System.out.printf("%s table %d = %05d%n", timestamp, tableNumber, reservation.id);
+//            }
+//        }
 //    }
 //}
 //
-//class Restaurant {
-//    int n_tables;
-//    Table[] tables;
-//    String runningHours;
-//    int k_slots;
-//    List<String> slots;
+//class Reservation {
+//    int id;
+//    int reservationDate;
+//    int slot;
+//    int people;
+//    int tableId;
 //
-//    Restaurant(int n_tables, int[] capacities, String runningHours, int k_slots, List<String> slots) {
-//        this.n_tables = n_tables;
-//        this.tables = new Table[n_tables];
-//        for (int i = 0; i < n_tables; i++) {
-//            this.tables[i] = new Table(capacities[i], i + 1);
-//        }
-//        this.runningHours = runningHours;
-//        this.k_slots = k_slots;
-//        this.slots = slots;
+//    Reservation(int id, int reservationDate, int slot, int people, int tableId) {
+//        this.id = id;
+//        this.reservationDate = reservationDate;
+//        this.slot = slot;
+//        this.people = people;
+//        this.tableId = tableId;
 //    }
 //}
