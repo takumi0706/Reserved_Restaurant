@@ -20,7 +20,7 @@ public class Basic {
 
         for (int i = 3; i < input.length; i++) {
             String[] query = input[i].split(" ");
-            String CurrentDate = query[0];
+            String currentDate = query[0];
             String timestamp = query[0] + " " + query[1];
             String command = query[2];
             int slot;
@@ -33,12 +33,12 @@ public class Basic {
 
                 case "issue-specified":
                     int id = Integer.parseInt(query[3]);
-                    int date = Integer.parseInt(query[4]);
+                    int reservationDate = Integer.parseInt(query[4]);
                     slot = Integer.parseInt(query[5]);
                     int people = Integer.parseInt(query[6]);
                     int table_id = Integer.parseInt(query[7]);
 
-                    handleIssueSpecified(id, date, slot, people, table_id, restaurant, timestamp, CurrentDate);
+                    handleIssueSpecified(id, reservationDate, slot, people, table_id, restaurant, timestamp, currentDate);
                     break;
 
                 default:
@@ -77,22 +77,22 @@ public class Basic {
         }
     }
 
-    private static void handleIssueSpecified(int id, int date, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String CurrentDate){
+    private static void handleIssueSpecified(int id, int reservationDate, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String currentDate){
 
-            if (CurrentDate.equals(String.valueOf(date)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
+            if (currentDate.equals(String.valueOf(reservationDate)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
                 System.out.printf("%s Error: the current slot cannot be specified.\n", timestamp);
-            } else if (CurrentDate.equals(String.valueOf(date)) && isPastTime(timestamp, restaurant.slots, slot)){
+            } else if (currentDate.equals(String.valueOf(reservationDate)) && isPastTime(timestamp, restaurant.slots, slot)){
                 System.out.printf("%s Error: a past time cannot be specified.\n", timestamp);
             } else if (restaurant.tables[table_id - 1].capacity < people) {
                 System.out.printf("%s Error: the maximum number of people at the table has been exceeded.\n", timestamp);
-            } else if (restaurant.tables[table_id - 1].reservations.containsKey(slot) && restaurant.tables[table_id - 1].reservations.get(slot).containsKey(date)) {
+            } else if (restaurant.tables[table_id - 1].reservations.containsKey(slot) && restaurant.tables[table_id - 1].reservations.get(slot).containsKey(reservationDate)) {
                 System.out.printf("%s Error: the table is occupied.\n", timestamp);
             } else {
                 if (!restaurant.tables[table_id - 1].reservations.containsKey(slot)) {
                     restaurant.tables[table_id - 1].reservations.put(slot, new HashMap<>());
                 }
-                Reservation reservation = new Reservation(date, slot, people, table_id, id);
-                restaurant.tables[table_id - 1].reservations.get(slot).put(date, reservation);
+                Reservation reservation = new Reservation(reservationDate, slot, people, table_id, id);
+                restaurant.tables[table_id - 1].reservations.get(slot).put(reservationDate, reservation);
                 System.out.printf("%s %05d%n", timestamp, id);
             }
 
@@ -125,14 +125,14 @@ class Table {
 }
 
 class Reservation {
-    int date;
+    int reservationDate;
     int slot;
     int people;
     int table_id;
     int id;
 
-    Reservation(int date, int slot, int people, int table_id, int id) {
-        this.date = date;
+    Reservation(int reservationDate, int slot, int people, int table_id, int id) {
+        this.reservationDate = reservationDate;
         this.slot = slot;
         this.people = people;
         this.table_id = table_id;
