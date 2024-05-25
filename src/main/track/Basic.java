@@ -28,7 +28,7 @@ public class Basic {
             switch (command) {
                 case "time":
                     slot = Integer.parseInt(query[3]);
-                    Handling_time(slot, n_tables, restaurant, timestamp);
+                    handleTime(slot, n_tables, restaurant, timestamp);
                     break;
 
                 case "issue-specified":
@@ -38,7 +38,7 @@ public class Basic {
                     int people = Integer.parseInt(query[6]);
                     int table_id = Integer.parseInt(query[7]);
 
-                    Handling_issue_specified(id, date, slot, people, table_id, restaurant, timestamp, CurrentDate);
+                    handleIssueSpecified(id, date, slot, people, table_id, restaurant, timestamp, CurrentDate);
                     break;
 
                 default:
@@ -57,7 +57,7 @@ public class Basic {
         return lines.toArray(new String[lines.size()]);
     }
 
-    private static void Handling_time(int slot, int n_tables, Restaurant restaurant, String timestamp){
+    private static void handleTime(int slot, int n_tables, Restaurant restaurant, String timestamp){
         if (slot > 1) {
             // Remove previous slot reservations
             for (Table table : restaurant.tables) {
@@ -77,7 +77,7 @@ public class Basic {
         }
     }
 
-    private static void Handling_issue_specified(int id, int date, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String CurrentDate){
+    private static void handleIssueSpecified(int id, int date, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String CurrentDate){
 
             if (CurrentDate.equals(String.valueOf(date)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
                 System.out.printf("%s Error: the current slot cannot be specified.\n", timestamp);
