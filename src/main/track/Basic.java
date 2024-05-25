@@ -81,7 +81,7 @@ public class Basic {
 
             if (CurrentDate.equals(String.valueOf(date)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
                 System.out.printf("%s Error: the current slot cannot be specified.\n", timestamp);
-            } else if (CurrentDate.equals(String.valueOf(date)) && isPastTime(timestamp, restaurant.slots)){
+            } else if (CurrentDate.equals(String.valueOf(date)) && isPastTime(timestamp, restaurant.slots, slot)){
                 System.out.printf("%s Error: a past time cannot be specified.\n", timestamp);
             } else if (restaurant.tables[table_id - 1].capacity < people) {
                 System.out.printf("%s Error: the maximum number of people at the table has been exceeded.\n", timestamp);
@@ -104,16 +104,11 @@ public class Basic {
         return timestamp.compareTo(slotParts[0]) >= 0 && timestamp.compareTo(slotParts[1]) <= 0;
     }
 
-    private static boolean isPastTime(String timestamp, List<String> slots){
+    private static boolean isPastTime(String timestamp, List<String> slots, int slot){
         String[] timeParts = timestamp.split(" ");
-        String time = timeParts[1];
-        for(String slot : slots){
-            String[] slotParts = slot.split("-");
-            if(time.compareTo(slotParts[0]) >= 0){
-                return true;
-            }
-        }
-        return false;
+        String endingTime = timeParts[1];
+        String[] slotParts = slots.get(slot -1 ).split("-");
+        return endingTime.compareTo(slotParts[1]) >= 0;
     }
 }
 
