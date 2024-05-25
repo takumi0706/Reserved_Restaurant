@@ -20,6 +20,7 @@ public class Basic {
 
         for (int i = 3; i < input.length; i++) {
             String[] query = input[i].split(" ");
+            String CurrentDate = query[0];
             String timestamp = query[0] + " " + query[1];
             String command = query[2];
             int slot;
@@ -27,7 +28,7 @@ public class Basic {
             switch (command) {
                 case "time":
                     slot = Integer.parseInt(query[3]);
-                    Handling_time_command(slot, n_tables, restaurant, timestamp);
+                    Handling_time(slot, n_tables, restaurant, timestamp);
                     break;
 
                 case "issue-specified":
@@ -37,7 +38,7 @@ public class Basic {
                     int people = Integer.parseInt(query[6]);
                     int table_id = Integer.parseInt(query[7]);
 
-                    Handling_issue_specified(id, date, slot, people, table_id, restaurant, timestamp);
+                    Handling_issue_specified(id, date, slot, people, table_id, restaurant, timestamp, CurrentDate);
                     break;
 
                 default:
@@ -56,7 +57,7 @@ public class Basic {
         return lines.toArray(new String[lines.size()]);
     }
 
-    private static void Handling_time_command(int slot, int n_tables, Restaurant restaurant, String timestamp){
+    private static void Handling_time(int slot, int n_tables, Restaurant restaurant, String timestamp){
         if (slot > 1) {
             // Remove previous slot reservations
             for (Table table : restaurant.tables) {
@@ -76,23 +77,25 @@ public class Basic {
         }
     }
 
-    private static void Handling_issue_specified(int id, int date, int slot, int people, int table_id, Restaurant restaurant, String timestamp){
-        if(isWithReservationSlot(timestamp, restaurant.slots, slot)){
-            System.out.printf("%s Error: the current slot cannot be specified.\n", timestamp);
-        }else if(isPastTime(timestamp, restaurant.slots)){
-            System.out.printf("%s Error: a past time cannot be specified.\n", timestamp);
-        }else if(restaurant.tables[table_id - 1].capacity < people){
-            System.out.printf("%s Error: the maximum number of people at the table has been exceeded.\n", timestamp);
-        }else if(restaurant.tables[table_id - 1].reservations.containsKey(slot) && restaurant.tables[table_id - 1].reservations.get(slot).containsKey(date)){
-            System.out.printf("%s Error: the table is occupied.\n", timestamp);
-        }else{
-            if (!restaurant.tables[table_id - 1].reservations.containsKey(slot)) {
-                restaurant.tables[table_id - 1].reservations.put(slot, new HashMap<>());
+    private static void Handling_issue_specified(int id, int date, int slot, int people, int table_id, Restaurant restaurant, String timestamp, String CurrentDate){
+
+            if (CurrentDate.equals(String.valueOf(date)) && isWithReservationSlot(timestamp, restaurant.slots, slot)) {
+                System.out.printf("%s Error: the current slot cannot be specified.\n", timestamp);
+            } else if (CurrentDate.equals(String.valueOf(date)) && isPastTime(timestamp, restaurant.slots)){
+                System.out.printf("%s Error: a past time cannot be specified.\n", timestamp);
+            } else if (restaurant.tables[table_id - 1].capacity < people) {
+                System.out.printf("%s Error: the maximum number of people at the table has been exceeded.\n", timestamp);
+            } else if (restaurant.tables[table_id - 1].reservations.containsKey(slot) && restaurant.tables[table_id - 1].reservations.get(slot).containsKey(date)) {
+                System.out.printf("%s Error: the table is occupied.\n", timestamp);
+            } else {
+                if (!restaurant.tables[table_id - 1].reservations.containsKey(slot)) {
+                    restaurant.tables[table_id - 1].reservations.put(slot, new HashMap<>());
+                }
+                Reservation reservation = new Reservation(date, slot, people, table_id, id);
+                restaurant.tables[table_id - 1].reservations.get(slot).put(date, reservation);
+                System.out.printf("%s %05d%n", timestamp, id);
             }
-            Reservation reservation = new Reservation(date, slot, people, table_id, id);
-            restaurant.tables[table_id - 1].reservations.get(slot).put(date, reservation);
-            System.out.printf("%s %05d%n", timestamp, id);
-        }
+
     }
 
     private static boolean isWithReservationSlot(String timestamp, List<String> slots, int slot){
